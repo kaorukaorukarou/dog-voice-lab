@@ -1,55 +1,36 @@
-Canine Vocalization Lab v0.2 — iPhone / Safari対応
-=====================================================
+Canine Vocalization Lab v0.3 — 公開済み学習済みAI搭載版
 
-【アプリの内容】
-1頭の犬の発声を録音し、発声の状況・種類とともに記録します。
-RMS、Peak、ZCR、スペクトル重心、スペクトル平坦度、参考F0を測定します。
-これは「犬語翻訳」ではありません。音響指標の妥当性・再現性は未検証です。
-音声・特徴量はブラウザのIndexedDBに保存され、サーバーに自動送信されません。
+使用方法：
+1. ZIPを解凍します。
+2. 内部の index.html, app.js, pretrained-ai.js, analysis-worker.js, styles.css,
+   sw.js, manifest.webmanifest, icon-180.png, icon-512.png, icon.svg, .nojekyll を
+   GitHub の dog-voice-lab リポジトリの最上位にアップロードします。
+3. GitHub Pagesの https://ユーザー名.github.io/dog-voice-lab/ をiPhoneのSafariで開きます。
+4. 録音または音声ファイルの読み込みを行い、
+   「この音声をAI分類」を押します。
+5. 吠え、遠吠え、唸り、クンクン鳴き等に関するモデルのスコアを表示します。
+6. 録音や解析値を保存し、CSVまたはZIPで書き出せます。
 
-【iPhoneで使うための公開手順（GitHub Pages）】
-1. GitHubにログインし、新しい public リポジトリを作成します。
-2. 本ZIPを解凍し、index.html / styles.css / app.js / analysis-worker.js /
-   manifest.webmanifest / sw.js / icon*.png / icon.svg / .nojekyll を、リポジトリ直下へアップロードします。
-3. リポジトリの Settings → Pages → Build and deployment →
-   Deploy from a branch → Branch: main / (root) → Save を選択します。
-4. 表示された https://<ユーザー名>.github.io/<リポジトリ名>/ を iPhoneのSafariで開きます。
-5. 「録音開始」をタップし、マイク使用を許可します。
-6. Safariの共有メニューから「ホーム画面に追加」でアイコンを登録できます。
+旧v0.2からの変更：
+- 公開済みのGoogle YAMNet（AudioSet学習済み）モデルを使った音声イベント分類機能を追加。
+- 登録済み録音は、同じGitHub PagesのURL・同じSafari保存場所であれば、IndexedDB（canine-lab-v1）から引き続き読み込めます。
+- AIラベル・モデル名・スコア・区間開始位置をCSVに追加しました。
+- 音声波形・音響特徴量解析・録音・保存は従来通りです。
 
-注意：GitHub Pagesの公開リポジトリに入れたソースコードは公開されます。
-      犬の録音データや研究用の個人情報をリポジトリにはアップロードしないでください。
+制限：
+- 「食事が欲しい」「怒っている」などの情動・要求・意味を予測するモデルではありません。
+- クラス間スコアは犬の感情の確率を意味しません。
+- 初回AI実行時に外部CDNとGoogle提供モデルを読み込みます（要通信）。モデル本体はZIP同梱ではありません。
+- AI音声分類のiPhone実機動作は未検証です。録音・基本解析のみ実機確認済み（ユーザー側）。
+- クラウドへ録音そのものはアップロードしませんが、MediaPipeライブラリ側の利用状況収集については提供元のプライバシー説明をご確認ください。
+- Safariは音声形式によってデコードできない場合があります。
 
-【基本操作】
-- 「録音開始」→「録音停止」または「ファイル読込」で音声を取得。
-- 状況ラベルを選択して「記録を保存」。
-- 終了時は「音声＋CSV（ZIP）」を押して、iPhoneのファイルに保存。
-  iOSの共有画面が出たら「ファイルに保存」を選びます。
-- 録音中はiPhoneをロックせず、Safari画面を維持してください。
-- プライベートブラウズは使わず、同じ起動方法（Safari／ホーム画面）を使ってください。
-  別のアプリ起動方法では保存領域を共有しない場合があります。
-- オフライン利用は初回にHTTPSでアプリを開き、全ファイルのキャッシュ後に可能ですが、
-  マイク動作やデータ保持はiOS環境に依存します。
+外部依存（端末上の実行）：
+@mediapipe/tasks-audio@1.1.0 (Apache 2.0)
+https://cdn.jsdelivr.net/npm/@mediapipe/tasks-audio@1.1.0/+esm
+Google YAMNet / AudioSet pretrained
+https://storage.googleapis.com/mediapipe-models/audio_classifier/yamnet/float32/1/yamnet.tflite
 
-【研究上の注意】
-- 録音距離、室内条件、録音機器を統一することを推奨します。
-- iPhoneがマイクのノイズ抑制・自動利得制御を適用する場合があります。
-  アプリは無効化を要求しますが、OSが必ず従うとは限りません。
-- F0は周期成分を検出できた一部のフレームに基づく参考推定値です。
-- スペクトル関連の特徴量は音声全体から等間隔に抽出した最大125フレームで計算します。
-- 機械学習や感情分類はまだ搭載していません。
-- IndexedDB内データは恒久的バックアップではありません。毎回ZIP出力してください。
-- ZIPは非圧縮方式です。録音数が多いとファイル容量が大きくなります。
-
-【構成】
-index.html : 画面
-styles.css : iPhone向けレイアウト
-app.js : 音声録音、保存、ZIP/CSV出力
-analysis-worker.js : 音声特徴量計算（バックグラウンドワーカー）
-manifest.webmanifest / icon*.png / icon.svg : ホーム画面への追加
-sw.js : 画面のオフラインキャッシュ
-
-【検証状況】
-JavaScript構文チェック、デスクトップChromiumのモバイル画面サイズでの
-音声ファイル解析・ラベル保存のテスト、テスト信号のF0検証、ZIP CRC検証を実施。
-iPhone実機でのマイク録音・保存動作の確認は別途必要です。
+参考：
+https://developers.google.com/edge/mediapipe/solutions/audio/audio_classifier/web_js
+https://github.com/tensorflow/models/blob/master/research/audioset/yamnet/README.md

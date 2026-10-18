@@ -1,7 +1,7 @@
 {
-  "name": "Canine Vocalization Lab",
+  "name": "Canine Vocalization Lab AI",
   "short_name": "犬の音声研究",
-  "description": "単一犬の発声音響特徴量と行動状況を記録する研究アプリ",
+  "description": "公開済みのYAMNetによる犬の鳴き声の音響イベント分類と特徴量解析",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
@@ -9,7 +9,17 @@
   "background_color": "#f2f6f5",
   "theme_color": "#132e39",
   "icons": [
-    {"src": "./icon-180.png", "sizes": "180x180", "type": "image/png", "purpose": "any"},
-    {"src": "./icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"}
+    {
+      "src": "./icon-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
   ]
 }

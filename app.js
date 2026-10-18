@@ -2,9 +2,12 @@
 const $ = id => document.getElementById(id);
 const MAX_RECORD_MS = 60000;
 const MAX_IMPORT_BYTES = 40 * 1024 * 1024;
-const CSV_FIELDS = ['id','date','dog','session','observer','context','vocal','confidence','notes','duration_s','sample_rate_hz','rms','peak','zero_crossing_rate','spectral_centroid_hz','spectral_flatness','f0_hz','f0_valid_frames','f0_total_frames','analyzed_spectral_frames','accepted_spectral_frames','audio_type'];
+const CSV_FIELDS = ['id','date','dog','session','observer','context','vocal','confidence','notes','duration_s','sample_rate_hz','rms','peak','zero_crossing_rate','spectral_centroid_hz','spectral_flatness','f0_hz','f0_valid_frames','f0_total_frames','analyzed_spectral_frames','accepted_spectral_frames','ai_model','ai_label','ai_score','ai_dog_label','ai_dog_score','ai_window_start_s','audio_type'];
 let db = null, activeCapture = null, currentBlob = null, currentFeatures = null, playerUrl = null, analysisWorker = null;
 let nextRequestId = 1;
+let currentAI = null;
+let currentPCM = null;
+window.CanineLab = {getLatestAudio:()=>currentBlob, getLatestPCM:()=>currentPCM, getLatestAI:()=>currentAI, setAIResult: value=>{currentAI=value;}};
 function setStatus(message, type = '') { $('status').textContent = message; $('status').className = 'status ' + type; }
 function setSaveStatus(message, type = '') { $('saveStatus').textContent = message; $('saveStatus').className = 'status ' + type; }
 function errorText(error) {return error && error.message ? error.message : String(error);}
@@ -139,7 +142,8 @@ function useAnalysisWorker(samples, sampleRate) {
   });
 }
 async function processAudio(blob, fallbackPCM=null, fallbackSR=null) {
-  currentBlob=null;currentFeatures=null;$('save').disabled=true;setSaveStatus('');
+  currentBlob=null;currentFeatures=null;currentAI=null;currentPCM=null;$('save').disabled=true;setSaveStatus('');
+  document.dispatchEvent(new CustomEvent('canine:audio-reset'));
   setStatus('音声を読み込み、解析しています…');
   try {
     let data;
@@ -148,9 +152,11 @@ async function processAudio(blob, fallbackPCM=null, fallbackSR=null) {
       data={samples:fallbackPCM,sampleRate:fallbackSR};
     }
     drawWave(data.samples);
+    currentPCM={pcm:data.samples.slice(),sampleRate:data.sampleRate};
     const features = await useAnalysisWorker(data.samples, data.sampleRate);
     currentBlob=blob;currentFeatures=features;assignAudio(blob);showFeatures(features);
     $('save').disabled=!db;
+    document.dispatchEvent(new CustomEvent('canine:audio-ready', {detail:{blob}}));
     setStatus(`解析完了：${features.duration_s} 秒。発声時の状況を選択し、記録を保存してください。`, 'success');
   } catch (err) {
     drawWave(null);
@@ -262,7 +268,7 @@ $('save').addEventListener('click', async()=>{
   if (!currentBlob || !currentFeatures)return;
   if (!$('context').value) {setSaveStatus('発声時の状況を選択してください。','error');$('context').focus();return;}
   const id=(crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`);
-  const row={id,date:new Date().toISOString(),dog:$('dog').value.trim()||'DOG-001',session:$('session').value.trim(),observer:$('observer').value.trim(),context:$('context').value,vocal:$('vocal').value,confidence:$('confidence').value,notes:$('notes').value.trim(),...currentFeatures,audio_type:currentBlob.type,audio:currentBlob};
+  const row={id,date:new Date().toISOString(),dog:$('dog').value.trim()||'DOG-001',session:$('session').value.trim(),observer:$('observer').value.trim(),context:$('context').value,vocal:$('vocal').value,confidence:$('confidence').value,notes:$('notes').value.trim(),...currentFeatures,ai_model:currentAI?.model||'',ai_label:currentAI?.topLabel||'',ai_score:currentAI?.topScore??'',ai_dog_label:currentAI?.dogLabel||'',ai_dog_score:currentAI?.dogScore??'',ai_window_start_s:currentAI?.startS??'',audio_type:currentBlob.type,audio:currentBlob};
   try {
     $('save').disabled=true;
     await requestDB('readwrite',store=>store.put(row));
@@ -283,7 +289,7 @@ async function refreshRecords() {
     card.className='record-card';heading.className='record-header';meta.className='record-meta';actions.className='record-actions';
     date.textContent=new Date(row.date).toLocaleString('ja-JP');vocal.textContent=row.vocal;vocal.className='count';
     heading.append(date,vocal);
-    meta.textContent=`${row.context} ／ ${row.duration_s}秒 ／ RMS ${row.rms} ／ F0 ${row.f0_hz??'—'} Hz`;
+    meta.textContent=`${row.context} ／ ${row.duration_s}秒 ／ RMS ${row.rms} ／ F0 ${row.f0_hz??'—'} Hz`+(row.ai_dog_label?' ／ AI: '+row.ai_dog_label:'');
     addMiniButton(actions,'再生','',()=>{$('player').pause();assignAudio(row.audio);$('player').play().catch(()=>{});$('player').scrollIntoView({behavior:'smooth',block:'center'});});
     addMiniButton(actions,'音声保存','',async()=>{$('exportStatus').textContent=await exportFile(row.audio,filenameFor(row));});
     addMiniButton(actions,'削除','danger',async()=>{

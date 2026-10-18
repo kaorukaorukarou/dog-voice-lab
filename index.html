@@ -17,8 +17,8 @@
 <body>
 <header class="site-header">
   <div class="container head-row">
-    <div><p class="kicker">単一犬・縦断観察研究</p><h1>Canine Vocalization Lab</h1><p class="subtitle">録音・特徴量解析・行動状況の記録</p></div>
-    <div class="version">iPhone対応 v0.2</div>
+    <div><p class="kicker">単一犬・縦断観察研究</p><h1>Canine Vocalization Lab</h1><p class="subtitle">録音・学習済みAI分類・音響解析</p></div>
+    <div class="version">学習済みAI搭載 v0.3</div>
   </div>
 </header>
 <main class="container layout">
@@ -49,7 +49,30 @@
     <audio id="player" controls preload="metadata" playsinline></audio>
     <h3>音響特徴量</h3>
     <div class="stats" id="stats"><div class="stat"><span class="value">—</span><span class="metric">解析前</span></div></div>
-    <p class="small-note">F0、スペクトル重心などは探索的な計測値で、推定の正確性は未検証です。感情や発話内容の翻訳ではありません。</p>
+    <p class="small-note">F0、スペクトル重心などは探索的な計測値です。学習済みAIによる分類は、この下の「AI分類」から実行できます。</p>
+  </section>
+  <section class="panel ai-panel" id="aiPanel">
+    <div class="section-heading"><span class="step">AI</span><h2>学習済みAIで鳴き声を分類</h2></div>
+    <p class="ai-intro">既存の公開データ（AudioSet）で学習された <strong>Google YAMNet</strong> を利用します。<strong>追加の学習用録音は不要</strong>です。</p>
+    <div class="ai-info-grid">
+      <div><span class="ai-label">モデル</span><strong>YAMNet（521音響イベント）</strong></div>
+      <div><span class="ai-label">測定対象</span><strong>吠え／唸り／遠吠えなど</strong></div>
+    </div>
+    <div class="controls ai-actions">
+      <button type="button" class="btn primary" id="classifyAI" disabled>この音声をAI分類</button>
+      <button type="button" class="btn" id="modelReset" hidden>モデルを再読み込み</button>
+    </div>
+    <p class="status" id="aiStatus" aria-live="polite">録音または音声ファイルの読み込み後に、AI分類を実行できます。</p>
+    <div id="aiResults" class="ai-results" hidden>
+      <div class="ai-main-result"><span class="ai-label">最も強く検出された犬の発声クラス</span><strong id="aiHeadline">—</strong><p id="aiDescription"></p></div>
+      <h3>犬の発声に関連するクラス（モデル出力スコア）</h3>
+      <div id="aiDogScores"></div>
+      <h3>全音響イベントの上位5クラス</h3>
+      <div id="aiTopScores"></div>
+      <p class="small-note" id="aiWindow"></p>
+    </div>
+    <p class="warning">AIの出力は<strong>音響イベントの分類</strong>であり、犬の感情・要求・言語の翻訳ではありません。スコアは推定モデルの出力値で、校正された確率ではありません。犬に関連する音が検出されない場合は、その旨を表示します。</p>
+    <p class="small-note">初回分類時にはインターネットから公開済みAIモデルと実行プログラムを読み込みます。音声の推論処理自体は端末内で行われます。オンライン接続が必要な場合があります。</p>
   </section>
   <section class="panel">
     <div class="section-heading"><span class="step">02</span><h2>行動状況を記録する</h2></div>
@@ -78,7 +101,8 @@
     <p>録音中は画面を開いたままにし、画面ロック・他のアプリへの切り替えを避けてください。録音時の音声処理設定は端末・OSにより異なります。研究では録音距離・環境・端末をなるべく一定にしてください。</p>
   </section>
 </main>
-<footer class="container foot">探索的な音響特徴量計測アプリ／測定妥当性・再現性は未検証／データは端末内保存／v0.2</footer>
-<script src="./app.js" defer></script>
+<footer class="container foot">音響特徴量＋公開学習済みAIによる分類／犬の感情・意味の翻訳ではありません／v0.3</footer>
+<script src="./app.js?v=03" defer></script>
+<script type="module" src="./pretrained-ai.js?v=03"></script>
 </body>
 </html>
